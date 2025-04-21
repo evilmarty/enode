@@ -1,0 +1,96 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Account is already configured",
+      "already_in_progress": "Configuration flow is already in progress",
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "missing_configuration": "The component is not configured. Please follow the documentation.",
+      "no_url_available": "No URL available. For information about this error, [check the help section]({docs_url})",
+      "oauth_error": "Received invalid token data.",
+      "oauth_failed": "Error while obtaining access token.",
+      "oauth_timeout": "Timeout resolving OAuth token.",
+      "oauth_unauthorized": "OAuth authorization error while obtaining access token.",
+      "user_rejected_authorize": "Account linking rejected: {error}"
+    },
+    "error": {
+      "already_configured": "An entry is already configured with this user ID."
+    },
+    "create_entry": {
+      "default": "Successfully authenticated"
+    },
+    "step": {
+      "pick_implementation": {
+        "title": "Pick authentication method"
+      }
+    }
+  },
+  "config_subentries": {
+    "user_link": {
+      "initiate_flow": {
+        "user": "Link a device"
+      },
+      "step": {
+        "user": {
+          "title": "Link a device"
+        }
+      },
+      "error": {},
+      "abort": {
+        "user_linked": "Device has been linked"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "charge_state_battery_level": {
+        "name": "Battery Level"
+      },
+      "charge_state_charge_time_remaining": {
+        "name": "Charge Time Remaining"
+      },
+      "charge_state_range": {
+        "name": "Range"
+      },
+      "charge_state_battery_capacity": {
+        "name": "Battery Capacity"
+      },
+      "charge_state_charge_limit": {
+        "name": "Charge Limit"
+      },
+      "charge_state_power_delivery_state": {
+        "name": "Power Delivery State"
+      },
+      "charge_state_max_current": {
+        "name": "Max Current"
+      },
+      "odometer_distance": {
+        "name": "Odometer"
+      },
+      "smart_charging_deadline": {
+        "name": "Smart Charging Deadline"
+      },
+      "smart_charging_minimum_charge_limit": {
+        "name": "Minimum Charge Limit"
+      }
+    },
+    "binary_sensor": {
+      "charge_state_is_fully_charged": {
+        "name": "Fully Charged"
+      },
+      "charge_state_is_plugged_in": {
+        "name": "Plugged In"
+      },
+      "charge_state_is_charging": {
+        "name": "Charging"
+      },
+      "smart_charging_is_enabled": {
+        "name": "Smart Charging"
+      }
+    },
+    "geo_location": {
+      "location": {
+        "name": "Location"
+      }
+    }
+  }
+}
