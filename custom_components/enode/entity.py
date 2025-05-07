@@ -19,7 +19,10 @@ def _get_vehicle_device_info(
     }
     if vehicle.capabilities.information.is_capable:
         info["identifiers"].add((DOMAIN, vehicle.information.vin))
-        info["name"] = vehicle.information.display_name
+        info["name"] = (
+            vehicle.information.display_name  # Display name can be none
+            or f"{vehicle.information.brand} {vehicle.information.model}"
+        )
         info["manufacturer"] = vehicle.information.brand
         info["model"] = vehicle.information.model
         info["serial_number"] = vehicle.information.vin
@@ -46,6 +49,7 @@ class VehicleEntity[_DataUpdateCoordinatorT: DataUpdateCoordinator](
         self.device_info = _get_vehicle_device_info(vehicle)
         self._attr_unique_id = f"vehicle_{vehicle.id}_{description.key}"
         self._attr_extra_state_attributes = {
+            "vehicle_id": vehicle.id,
             "user_id": vehicle.user_id,
         }
 

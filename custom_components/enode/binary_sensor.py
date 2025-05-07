@@ -25,11 +25,6 @@ CHARGE_STATE_DESCRIPTIONS = [
         translation_key="charge_state_is_plugged_in",
         device_class=BinarySensorDeviceClass.PLUG,
     ),
-    BinarySensorEntityDescription(
-        key="is_charging",
-        translation_key="charge_state_is_charging",
-        device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
-    ),
 ]
 
 SMART_CHARGING_DESCRIPTIONS = [
@@ -46,7 +41,7 @@ async def async_setup_entry(
     config_entry: EnodeConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Enode sensor platform."""
+    """Set up Enode binary sensor platform."""
     async_add_entities(_generate_sensors(config_entry.runtime_data))
 
 
@@ -68,6 +63,21 @@ def _generate_vehicle_sensors(
             for description in CHARGE_STATE_DESCRIPTIONS:
                 yield VehicleChargeStateBinarySensor(
                     coordinator=coordinator, vehicle=vehicle, description=description
+                )
+            # This is a special case where we check if the vehicle is capable of starting or
+            # stopping charging. If it is not, we create a readonly binary sensor for charging state.
+            if (
+                not vehicle.capabilities.stop_charging.is_capable
+                and not vehicle.capabilities.start_charging.is_capable
+            ):
+                yield VehicleChargeStateBinarySensor(
+                    coordinator=coordinator,
+                    vehicle=vehicle,
+                    description=BinarySensorEntityDescription(
+                        key="is_charging",
+                        translation_key="charge_state_is_charging",
+                        device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+                    ),
                 )
         if vehicle.capabilities.smart_charging.is_capable:
             LOGGER.debug("Vehicle %s supports smart charging", vehicle.id)

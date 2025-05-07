@@ -13,11 +13,20 @@ from homeassistant.helpers.config_entry_oauth2_flow import (
     LocalOAuth2Implementation,
 )
 
-from .const import LOGGER, OAUTH2_AUTHORIZE, OAUTH2_TOKEN
+from .const import (
+    LOGGER,
+    OAUTH2_AUTHORIZE,
+    PRODUCTION_OAUTH2_TOKEN,
+    SANDBOX_OAUTH2_TOKEN,
+)
 
 
 class Oauth2Impl(LocalOAuth2Implementation):
     """OAuth2 implementation for Enode."""
+
+    def sandbox_mode(self) -> None:
+        """Set the implementation to sandbox mode."""
+        self.token_url = SANDBOX_OAUTH2_TOKEN
 
     @property
     def name(self) -> str:
@@ -75,5 +84,5 @@ async def async_get_auth_implementation(
         client_id=credential.client_id,
         client_secret=credential.client_secret,
         authorize_url=OAUTH2_AUTHORIZE,
-        token_url=OAUTH2_TOKEN,
+        token_url=PRODUCTION_OAUTH2_TOKEN,
     )

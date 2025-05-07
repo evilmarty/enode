@@ -39,7 +39,7 @@ A registered [Enode Developer](https://developers.enode.com/register) account is
   3. Search for Enode. (If you don't see it, try refreshing your browser page to reload the cache.)
 2. Provide the client credentials (see [Create an Enode client])
 3. Optionally, you can change the user ID that is used for linking devices. Defaults to the client ID.
-5. Click Submit so add the integration.
+4. Click Submit so add the integration.
 
 ## Linking a new device
 

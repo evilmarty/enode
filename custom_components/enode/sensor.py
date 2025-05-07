@@ -65,6 +65,7 @@ CHARGE_STATE_DESCRIPTIONS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         suggested_display_precision=0,
+        entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
         key="power_delivery_state",

@@ -21,6 +21,19 @@
     "step": {
       "pick_implementation": {
         "title": "Pick authentication method"
+      },
+      "auth": {
+        "data": {
+          "user_id": "User ID",
+          "sandbox": "Sandbox Mode"
+        }
+      },
+      "reconfigure": {
+        "data": {
+          "user_id": "User ID"
+        },
+        "description": "You're able to change the user ID used for linking future devices. Existing linked devices will not be affected.",
+        "title": "Reconfigure Enode"
       }
     }
   },
@@ -89,7 +102,16 @@
     },
     "geo_location": {
       "location": {
-        "name": "Location"
+        "name": "Location",
+        "state": {
+          "reachable": "Reachable",
+          "unreachable": "Unreachable"
+        }
+      }
+    },
+    "switch": {
+      "charge_state_is_charging": {
+        "name": "Charging"
       }
     }
   }

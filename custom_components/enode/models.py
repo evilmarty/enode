@@ -2,7 +2,7 @@
 
 from datetime import datetime, time
 from enum import StrEnum
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -21,6 +21,14 @@ class PowerDeliveryState(StrEnum):
     PLUGGED_IN_NO_POWER = "PLUGGED_IN:NO_POWER"
     PLUGGED_IN_FAULT = "PLUGGED_IN:FAULT"
     PLUGGED_IN_DISCHARGING = "PLUGGED_IN:DISCHARGING"
+
+
+class ErrorResponse(BaseModel):
+    """Error response model."""
+
+    type: str
+    title: str
+    detail: str
 
 
 class Pagination(BaseModel):
@@ -134,3 +142,53 @@ class Vehicle(BaseModel):
     odometer: Odometer
     capabilities: VehicleCapabilities
     scopes: list[str]
+
+
+class ActionState(StrEnum):
+    """Action state enumeration."""
+
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class FailureReason(BaseModel):
+    """Failure reason model."""
+
+    type: str
+    detail: str
+
+
+class ChargeAction(BaseModel):
+    """Charge action model."""
+
+    id: str
+    user_id: str = Field(alias="userId")
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+    completed_at: datetime | None = Field(default=None, alias="completedAt")
+    state: ActionState
+    target_id: str = Field(alias="targetId")
+    target_type: Literal["vehicle", "charger"] = Field(alias="targetType")
+    kind: Literal["START", "STOP"]
+    failure_reason: FailureReason | None = Field(default=None, alias="failureReason")
+
+
+class WebhookAuthentication(BaseModel):
+    """Webhook authentication model."""
+
+    header_name: str = Field(alias="headerName")
+
+
+class Webhook(BaseModel):
+    """Webhook model."""
+
+    id: str
+    url: str
+    events: list[str]
+    is_active: bool = Field(alias="isActive")
+    created_at: datetime = Field(alias="createdAt")
+    api_version: str | None = Field(alias="apiVersion", default=None)
+    last_success: datetime = Field(alias="lastSuccess")
+    authentication: WebhookAuthentication | None = Field(default=None)

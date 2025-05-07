@@ -7,38 +7,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import EnodeClient
-from .const import DATA_USER_ID, LOGGER, UPDATE_INTERVAL
+from .const import CONF_USER_ID, LOGGER, UPDATE_INTERVAL
 from .models import Vehicle
 
-
-class EnodeVehiclesCoordinator(DataUpdateCoordinator[list[Vehicle]]):
-    """Coordinator for fetching Enode vehicles."""
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        client: EnodeClient,
-        config_entry: ConfigEntry | None = None,
-    ) -> None:
-        """Initialize Enode Vehicles Coordinator."""
-        super().__init__(
-            hass,
-            LOGGER,
-            config_entry=config_entry,
-            name=type(self).__name__,
-            update_interval=UPDATE_INTERVAL,
-        )
-        self.client = client
-        self.user_id = config_entry.data.get(DATA_USER_ID) if config_entry else None
-
-    async def _async_update_data(self) -> list[Vehicle]:
-        """Fetch data from Enode API."""
-        try:
-            if self.user_id is None:
-                return await self.client.list_vehicles()
-            return await self.client.list_user_vehicles(self.user_id)
-        except ClientResponseError as err:
-            raise UpdateFailed from err
+type EnodeConfigEntry = ConfigEntry[EnodeCoordinators]
+type EnodeVehiclesCoordinator = DataUpdateCoordinator[list[Vehicle]]
 
 
 class EnodeCoordinators:
@@ -52,11 +25,29 @@ class EnodeCoordinators:
     ) -> None:
         """Initialize Enode Coordinator."""
         self.client = client
-        self.vehicles = EnodeVehiclesCoordinator(hass, client, config_entry)
+        self.user_id = config_entry.data.get(CONF_USER_ID) if config_entry else None
+        self.vehicles = DataUpdateCoordinator[list[Vehicle]](
+            hass=hass,
+            logger=LOGGER,
+            config_entry=config_entry,
+            name="vehicles",
+            update_method=self._update_vehicles,
+            update_interval=UPDATE_INTERVAL,
+        )
+
+    async def _update_vehicles(self) -> list[Vehicle]:
+        """Update vehicles data."""
+        try:
+            if self.user_id is None:
+                return await self.client.list_vehicles()
+            return await self.client.list_user_vehicles(self.user_id)
+        except ClientResponseError as err:
+            raise UpdateFailed from err
+
+    async def async_refresh(self) -> None:
+        """Refresh data and log errors."""
+        await self.vehicles.async_refresh()
 
     async def async_config_entry_first_refresh(self) -> None:
         """Refresh data for the first time."""
         await self.vehicles.async_config_entry_first_refresh()
-
-
-type EnodeConfigEntry = ConfigEntry[EnodeCoordinators]

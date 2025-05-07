@@ -17,7 +17,8 @@ from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.helpers import config_entry_oauth2_flow
 from homeassistant.helpers.network import get_url
 
-from .const import DATA_USER_ID, DOMAIN, LOGGER
+from .api import Language, VendorType
+from .const import CONF_SANDBOX, CONF_USER_ID, DOMAIN, LOGGER
 from .coordinator import EnodeConfigEntry
 from .views import ConfigFlowExternalCallbackView
 
@@ -48,22 +49,41 @@ class OAuth2FlowHandler(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Create an entry for auth."""
-        errors = {}
         if user_input is not None:
-            await self.async_set_unique_id(user_input["user_id"])
-            errors = self._validate_user_input(user_input)
-            if not errors:
-                self.user_data = user_input
-                return await self.async_step_creation(user_input=user_input)
+            await self.async_set_unique_id(self.flow_impl.client_id)
+            self.user_data = user_input
+            if user_input[CONF_SANDBOX]:
+                self.flow_impl.sandbox_mode()
+            return await self.async_step_creation(user_input=user_input)
         client_id = getattr(self.flow_impl, "client_id", None)
         return self.async_show_form(
             step_id="auth",
             data_schema=vol.Schema(
                 {
-                    vol.Required("user_id", default=client_id): str,
+                    vol.Required(CONF_USER_ID, default=client_id): str,
+                    vol.Optional(CONF_SANDBOX, default=False): bool,
                 }
             ),
-            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle the configuration step."""
+        entry = self._get_reconfigure_entry()
+        if user_input is not None:
+            return self.async_update_reload_and_abort(
+                entry=entry,
+                data_updates=user_input,
+            )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_USER_ID, default=entry.data[CONF_USER_ID]): str,
+                }
+            ),
         )
 
     async def async_oauth_create_entry(self, data: dict) -> ConfigFlowResult:
@@ -89,7 +109,7 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
     ) -> SubentryFlowResult:
         """Handle the user link step."""
         entry: EnodeConfigEntry = self._get_entry()
-        user_id = entry.data[DATA_USER_ID]
+        user_id = entry.data[CONF_USER_ID]
         view = ConfigFlowExternalCallbackView()
         self.hass.http.register_view(view)
         redirect_uri = (
@@ -97,9 +117,14 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
             .with_path(view.url)
             .with_query(flow_id=self.flow_id)
         )
+        try:
+            language = Language(self.hass.config.language)
+        except ValueError:
+            language = Language.BROWSER
         link = await entry.runtime_data.client.user_link(
             user_id=user_id,
-            language=self.hass.config.language,
+            language=language,
+            vendor_type=VendorType.VEHICLE,
             redirect_uri=redirect_uri,
         )
         return self.async_external_step(
@@ -120,29 +145,3 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
         """Handle the user link step."""
         self.hass.config_entries.async_schedule_reload(self._entry_id)
         return self.async_abort(reason="user_linked")
-
-
-#     @staticmethod
-#     @callback
-#     def async_get_options_flow(
-#         config_entry: ConfigEntry,
-#     ) -> OptionsFlow:
-#         """Create the options flow."""
-#         return EnodeOptionsFlowHandler(config_entry)
-
-
-# class EnodeOptionsFlowHandler(OptionsFlow):
-#     """Handle Enode options."""
-
-#     def __init__(self, config_entry: ConfigEntry) -> None:
-#         """Initialize the options flow."""
-#         self.config_entry = config_entry
-
-#     async def async_step_init(
-#         self, user_input: dict[str, Any] | None = None
-#     ) -> ConfigFlowResult:
-#         """Manage the options."""
-#         return self.async_show_menu(
-#             step_id="init",
-#             menu_options=["link_user", "unlink_user"],
-#         )

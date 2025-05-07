@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import LOGGER
+from .const import LOGGER, STATE_REACHABLE, STATE_UNREACHABLE
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
 
@@ -51,6 +51,13 @@ class VehicleGeolocation(VehicleEntity[EnodeVehiclesCoordinator], GeolocationEve
     """Representation of a vehicle's geolocation."""
 
     @property
+    def state(self) -> str | None:
+        """Return the state of the geolocation."""
+        if vehicle := self.vehicle:
+            return STATE_REACHABLE if vehicle.is_reachable else STATE_UNREACHABLE
+        return None
+
+    @property
     def source(self) -> str:
         """Return the source of the geolocation."""
         if vehicle := self.vehicle:
@@ -69,4 +76,19 @@ class VehicleGeolocation(VehicleEntity[EnodeVehiclesCoordinator], GeolocationEve
         """Return the longitude of the vehicle."""
         if vehicle := self.vehicle:
             return vehicle.location.longitude
+        return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None] | None:
+        """Return the state attributes of the vehicle."""
+        if vehicle := self.vehicle:
+            last_updated = (
+                str(vehicle.location.last_updated)
+                if vehicle.location.last_updated
+                else None
+            )
+            return {
+                "location_id": vehicle.location.id,
+                "last_updated": last_updated,
+            }
         return None
