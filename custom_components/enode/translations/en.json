@@ -71,7 +71,18 @@
         "name": "Charge Limit"
       },
       "charge_state_power_delivery_state": {
-        "name": "Power Delivery State"
+        "name": "Power Delivery State",
+        "state": {
+          "UNKNOWN": "Unknown",
+          "UNPLUGGED": "Unplugged",
+          "PLUGGED_IN:INITIALIZING": "Initializing",
+          "PLUGGED_IN:CHARGING": "Charging",
+          "PLUGGED_IN:STOPPED": "Stopped",
+          "PLUGGED_IN:COMPLETED": "Completed",
+          "PLUGGED_IN:NO_POWER": "No Power",
+          "PLUGGED_IN:FAULT": "Fault",
+          "PLUGGED_IN:DISCHARGING": "Discharging"
+        }
       },
       "charge_state_max_current": {
         "name": "Max Current"
