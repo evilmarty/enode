@@ -1,0 +1,20 @@
+{
+  "entity": {
+    "sensor": {
+      "charge_state_power_delivery_state": {
+        "default": "mdi:power-cycle",
+        "state": {
+          "UNKNOWN": "mdi:battery-unknown",
+          "UNPLUGGED": "mdi:power-plug-off",
+          "PLUGGED_IN:INITIALIZING": "mdi:power-plug",
+          "PLUGGED_IN:CHARGING": "mdi:battery-charging",
+          "PLUGGED_IN:STOPPED": "mdi:battery",
+          "PLUGGED_IN:COMPLETED": "mdi:battery-charging-100",
+          "PLUGGED_IN:NO_POWER": "mdi:flash-alert",
+          "PLUGGED_IN:FAULT": "mdi:battery-alert",
+          "PLUGGED_IN:DISCHARGING": "mdi:battery-minus"
+        }
+      }
+    }
+  }
+}
