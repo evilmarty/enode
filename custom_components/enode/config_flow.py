@@ -169,63 +169,67 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
 class WebhookFlowHandler(ConfigSubentryFlow):
     """Handle webhook flow."""
 
-    _create_webhook_task: asyncio.Task[None] | None = None
-    _test_webhook_task: asyncio.Task[None] | None = None
-    _delete_webhook_task: asyncio.Task[None] | None = None
+    _task: asyncio.Task[None] | None = None
+    _original_data: dict[str, Any] | None = None
     _webhook: Webhook | None = None
-    _secret: str | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         """Handle the webhook step."""
-        if not self._create_webhook_task:
-            self._create_webhook_task = self.hass.async_create_task(
-                self._create_webhook()
-            )
-        if not self._create_webhook_task.done():
+        if not self._task:
+            self._task = self.hass.async_create_task(self._create_webhook())
+        if not self._task.done():
             return self.async_show_progress(
                 progress_action="creating_webhook",
-                progress_task=self._create_webhook_task,
+                progress_task=self._task,
             )
-        if not self._test_webhook_task:
-            self._test_webhook_task = self.hass.async_create_task(self._test_webhook())
-        if not self._test_webhook_task.done():
+        self._task = None
+        return self.async_show_progress_done(next_step_id="test")
+
+    async def async_step_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the test webhook step."""
+        if not self._task:
+            self._task = self.hass.async_create_task(self._test_webhook())
+        if not self._task.done():
             return self.async_show_progress(
                 progress_action="testing_webhook",
-                progress_task=self._test_webhook_task,
+                progress_task=self._task,
             )
-        ex = self._test_webhook_task.exception()
-        if ex is not None:
-            if not self._delete_webhook_task:
-                self._delete_webhook_task = self.hass.async_create_task(
-                    self._delete_webhook()
-                )
-            if not self._delete_webhook_task.done():
-                return self.async_show_progress(
-                    progress_action="deleting_webhook",
-                    progress_task=self._delete_webhook_task,
-                )
+        self._task = None
+        task = self._task
+        if task.exception():
+            return self.async_show_progress_done(next_step_id="delete")
         return self.async_show_progress_done(next_step_id="finish")
+
+    async def async_step_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the delete webhook step."""
+        if not self._task:
+            self._task = self.hass.async_create_task(self._delete_webhook())
+        if not self._task.done():
+            return self.async_show_progress(
+                progress_action="deleting_webhook",
+                progress_task=self._task,
+            )
+        self._task = None
+        return self.async_show_progress_done(next_step_id="cancel")
 
     async def async_step_finish(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         """Handle the finish step."""
-        if self._webhook is None or self._secret is None:
-            return self.async_abort(reason="webhook_not_created")
-        entry = self._get_entry()
-        data = {
-            **entry.data,
-            CONF_WEBHOOK_ID: self._webhook.id,
-            CONF_WEBHOOK_SECRET: self._secret,
-        }
-        self.hass.config_entries.async_update_entry(
-            entry=entry,
-            data=data,
-        )
-        self.hass.config_entries.async_schedule_reload(entry.entry_id)
+        self.hass.config_entries.async_schedule_reload(self._entry_id)
         return self.async_abort(reason="webhook_created")
+
+    async def async_step_cancel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the cancel step."""
+        return self.async_abort(reason="webhook_not_created")
 
     async def _create_webhook(self) -> None:
         """Create a webhook."""
@@ -237,7 +241,15 @@ class WebhookFlowHandler(ConfigSubentryFlow):
                 entry.runtime_data.client,
             )
             self._webhook = webhook
-            self._secret = secret
+            self._original_data = entry.data
+            self.hass.config_entries.async_update_entry(
+                entry=entry,
+                data={
+                    **entry.data,
+                    CONF_WEBHOOK_ID: webhook.id,
+                    CONF_WEBHOOK_SECRET: secret,
+                },
+            )
             return
         LOGGER.debug("No URL available for webhook creation")
 
@@ -258,10 +270,14 @@ class WebhookFlowHandler(ConfigSubentryFlow):
         if not self._webhook:
             return
         entry: EnodeConfigEntry = self._get_entry()
+        if self._original_data is not None:
+            self.hass.config_entries.async_update_entry(
+                entry=entry,
+                data=self._original_data,
+            )
+            self._original_data = None
         await entry.runtime_data.client.delete_webhook(self._webhook)
         LOGGER.debug("Webhook deleted: %s", self._webhook.id)
-        self._webhook = None
-        self._secret = None
 
 
 async def _create_webhook(
