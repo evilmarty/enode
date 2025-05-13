@@ -68,9 +68,7 @@ class EnodeClient:
         self._oauth_session = oauth_session
         self._api_url = SANDBOX_API_URL if sandbox else PRODUCTION_API_URL
 
-    async def _make_request(
-        self, type_: T, method: str, path: str, **kwargs
-    ) -> Response[T]:
+    async def _make_request(self, type_: T, method: str, path: str, **kwargs) -> T:
         """Make a request to the Enode API."""
         url = URL(self._api_url).with_path(path)
         LOGGER.debug("Making %s request to %s", method, url)
@@ -87,6 +85,8 @@ class EnodeClient:
         is_error = response.status == 400
         if not response.ok and not is_error:
             response.raise_for_status()
+        if type_ is None:
+            return None
         data = await response.json()
         if is_error:
             raise EnodeError(response, data)
@@ -185,7 +185,7 @@ class EnodeClient:
         if isinstance(webhook, Webhook):
             webhook = webhook.id
         await self._make_request(
-            Response[None],
+            None,
             method=METH_DELETE,
             path=f"/webhooks/{webhook}",
         )
