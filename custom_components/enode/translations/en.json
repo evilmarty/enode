@@ -75,6 +75,23 @@
         "webhook_created": "Webhook has been created",
         "webhook_not_created": "Webhook could not be created"
       }
+    },
+    "delete_webhook": {
+      "initiate_flow": {
+        "user": "Delete webhook"
+      },
+      "step": {
+        "user": {
+          "title": "Removing webhook"
+        }
+      },
+      "progress": {
+        "deleting_webhook": "Deleting webhook."
+      },
+      "error": {},
+      "abort": {
+        "webhook_deleted": "Webhook has been deleted"
+      }
     }
   },
   "entity": {

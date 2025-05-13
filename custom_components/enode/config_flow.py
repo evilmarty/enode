@@ -117,7 +117,9 @@ class OAuth2FlowHandler(AbstractOAuth2FlowHandler, domain=DOMAIN):
         """Return subentries supported by this integration."""
         types = {"user_link": UserLinkFlowHandler}
         if config_entry.data.get(CONF_WEBHOOK_ID) is None:
-            types["create_webhook"] = WebhookFlowHandler
+            types["create_webhook"] = CreateWebhookFlowHandler
+        else:
+            types["delete_webhook"] = DeleteWebhookFlowHandler
         return types
 
 
@@ -167,7 +169,7 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
         return self.async_abort(reason="user_linked")
 
 
-class WebhookFlowHandler(ConfigSubentryFlow):
+class CreateWebhookFlowHandler(ConfigSubentryFlow):
     """Handle webhook flow."""
 
     _task: asyncio.Task[None] | None = None
@@ -299,3 +301,44 @@ async def _create_webhook(
     )
     LOGGER.debug("Webhook created: %s", webhook.id)
     return webhook, secret
+
+
+class DeleteWebhookFlowHandler(ConfigSubentryFlow):
+    """Handle webhook deletion flow."""
+
+    _task: asyncio.Task[None] | None = None
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the webhook deletion step."""
+        if not self._task:
+            self._task = self.hass.async_create_task(self._delete_webhook())
+        if not self._task.done():
+            return self.async_show_progress(
+                progress_action="deleting_webhook",
+                progress_task=self._task,
+            )
+        self._task = None
+        return self.async_show_progress_done(next_step_id="finish")
+
+    async def async_step_finish(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the finish step."""
+        self.hass.config_entries.async_schedule_reload(self._entry_id)
+        return self.async_abort(reason="webhook_deleted")
+
+    async def _delete_webhook(self) -> None:
+        """Delete the webhook."""
+        entry: EnodeConfigEntry = self._get_entry()
+        data = entry.data.copy()
+        webhook_id = data.pop(CONF_WEBHOOK_ID, None)
+        data.pop(CONF_WEBHOOK_SECRET, None)
+        self.hass.config_entries.async_update_entry(
+            entry=entry,
+            data=data,
+        )
+        if webhook_id:
+            await entry.runtime_data.client.delete_webhook(webhook_id)
+            LOGGER.debug("Webhook deleted: %s", webhook_id)
