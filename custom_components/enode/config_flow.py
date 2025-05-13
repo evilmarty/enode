@@ -33,6 +33,7 @@ from .coordinator import EnodeConfigEntry
 from .views import ConfigFlowExternalCallbackView, EnodeWebhookView
 from .webhook import prepare_test_webhook
 
+TEST_TIMEOUT = 30
 RAND_LENGTH = 32
 SUPPORTED_WEBHOOK_EVENTS = [
     WebhookEventType.ENODE_WEBHOOK_TEST,
@@ -263,7 +264,8 @@ class WebhookFlowHandler(ConfigSubentryFlow):
         LOGGER.debug("Webhook test response: %s", resp)
         if not resp.is_success:
             raise ValueError("Webhook test failed")
-        await test_future
+        async with asyncio.timeout(TEST_TIMEOUT):
+            await test_future
 
     async def _delete_webhook(self) -> None:
         """Delete the webhook."""

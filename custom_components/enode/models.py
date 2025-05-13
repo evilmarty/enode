@@ -429,16 +429,16 @@ class WebhookTestEndpointResponse(BaseModel):
 class WebhookTestResponse(BaseModel):
     """Webhook test response model."""
 
-    status: Literal["success", "failure"]
+    status: Literal["SUCCESS", "FAILURE"]
     description: str
     response: WebhookTestEndpointResponse | None = Field(default=None)
 
     @property
     def is_success(self) -> bool:
         """Check if the test was successful."""
-        return self.status == "success"
+        return self.status == "SUCCESS"
 
     @property
     def is_failure(self) -> bool:
         """Check if the test failed."""
-        return self.status == "failure"
+        return self.status == "FAILURE"
