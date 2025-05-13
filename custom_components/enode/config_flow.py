@@ -214,13 +214,18 @@ class WebhookFlowHandler(ConfigSubentryFlow):
         """Handle the finish step."""
         if self._webhook is None or self._secret is None:
             return self.async_abort(reason="webhook_not_created")
-        return self.async_update_and_abort(
-            entry=self._get_entry(),
-            data_updates={
-                CONF_WEBHOOK_ID: self._webhook.id,
-                CONF_WEBHOOK_SECRET: self._secret,
-            },
+        entry = self._get_entry()
+        data = {
+            **entry.data,
+            CONF_WEBHOOK_ID: self._webhook.id,
+            CONF_WEBHOOK_SECRET: self._secret,
+        }
+        self.hass.config_entries.async_update_entry(
+            entry=entry,
+            data=data,
         )
+        self.hass.config_entries.async_schedule_reload(entry.entry_id)
+        return self.async_abort(reason="webhook_created")
 
     async def _create_webhook(self) -> None:
         """Create a webhook."""
