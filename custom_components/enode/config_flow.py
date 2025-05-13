@@ -290,6 +290,7 @@ async def _create_webhook(
     url = URL(get_url(hass, allow_internal=False, require_ssl=True)).with_path(
         EnodeWebhookView.url
     )
+    LOGGER.debug("Creating webhook with URL: %s", url)
     secret = get_random_string(RAND_LENGTH)
     webhook = await client.create_webhook(
         url=url,
