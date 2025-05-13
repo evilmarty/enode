@@ -38,7 +38,7 @@ def _generate_vehicle_switches(
     client: EnodeClient,
 ) -> Generator[SwitchEntity]:
     """Generate vehicle switches."""
-    for vehicle in coordinator.data:
+    for vehicle in coordinator.data or []:
         if (
             vehicle.capabilities.start_charging.is_capable
             or vehicle.capabilities.stop_charging.is_capable

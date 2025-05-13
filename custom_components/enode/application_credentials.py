@@ -6,14 +6,19 @@ from typing import Any, cast
 from aiohttp import BasicAuth, ClientError
 
 from homeassistant.components.application_credentials import ClientCredential
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.config_entry_oauth2_flow import (
     AbstractOAuth2Implementation,
     LocalOAuth2Implementation,
+    OAuth2Session,
+    async_get_config_entry_implementation,
 )
 
+from .api import EnodeClient
 from .const import (
+    CONF_SANDBOX,
     LOGGER,
     OAUTH2_AUTHORIZE,
     PRODUCTION_OAUTH2_TOKEN,
@@ -86,3 +91,10 @@ async def async_get_auth_implementation(
         authorize_url=OAUTH2_AUTHORIZE,
         token_url=PRODUCTION_OAUTH2_TOKEN,
     )
+
+
+async def get_client(hass: HomeAssistant, entry: ConfigEntry) -> EnodeClient:
+    """Get the Enode client."""
+    implementation = await async_get_config_entry_implementation(hass, entry)
+    sandbox = entry.data.get(CONF_SANDBOX, False)
+    return EnodeClient(OAuth2Session(hass, entry, implementation), sandbox=sandbox)

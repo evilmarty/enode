@@ -38,7 +38,7 @@ def _generate_vehicle_sensors(
     coordinator: EnodeVehiclesCoordinator,
 ) -> Generator[GeolocationEvent]:
     """Generate sensors for vehicles."""
-    for vehicle in coordinator.data:
+    for vehicle in coordinator.data or []:
         LOGGER.debug("Generating sensors for vehicle %s", vehicle.id)
         if vehicle.capabilities.location.is_capable:
             LOGGER.debug("Vehicle %s supports location", vehicle.id)

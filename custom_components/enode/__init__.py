@@ -4,14 +4,11 @@ from __future__ import annotations
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.config_entry_oauth2_flow import (
-    OAuth2Session,
-    async_get_config_entry_implementation,
-)
 
-from .api import EnodeClient
-from .const import CONF_SANDBOX
+from .application_credentials import get_client
+from .const import CONF_WEBHOOK_ID
 from .coordinator import EnodeConfigEntry, EnodeCoordinators
+from .views import EnodeWebhookView
 
 _PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -23,9 +20,10 @@ _PLATFORMS: list[Platform] = [
 
 async def async_setup_entry(hass: HomeAssistant, entry: EnodeConfigEntry) -> bool:
     """Set up Enode from a config entry."""
-    implementation = await async_get_config_entry_implementation(hass, entry)
-    sandbox = entry.data.get(CONF_SANDBOX, False)
-    client = EnodeClient(OAuth2Session(hass, entry, implementation), sandbox=sandbox)
+    has_webhook = entry.data.get(CONF_WEBHOOK_ID) is not None
+    if has_webhook:
+        hass.http.register_view(EnodeWebhookView)
+    client = await get_client(hass, entry)
     coordinators = EnodeCoordinators(hass, client)
     await coordinators.async_refresh()
 
@@ -37,6 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EnodeConfigEntry) -> boo
 
 async def async_unload_entry(hass: HomeAssistant, entry: EnodeConfigEntry) -> bool:
     """Unload a config entry."""
+    await entry.runtime_data.async_shutdown()
     return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
 
 

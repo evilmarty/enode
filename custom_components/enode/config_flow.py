@@ -1,5 +1,7 @@
 """Config flow for Enode."""
 
+import asyncio
+from contextlib import suppress
 import logging
 from typing import Any
 
@@ -12,20 +14,33 @@ from homeassistant.config_entries import (
     ConfigSubentryFlow,
     SubentryFlowResult,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import AbortFlow
-from homeassistant.helpers import config_entry_oauth2_flow
-from homeassistant.helpers.network import get_url
+from homeassistant.helpers.config_entry_oauth2_flow import AbstractOAuth2FlowHandler
+from homeassistant.helpers.network import NoURLAvailableError, get_url
+from homeassistant.util import get_random_string
 
-from .api import Language, VendorType
-from .const import CONF_SANDBOX, CONF_USER_ID, DOMAIN, LOGGER
+from .api import EnodeClient, Language, VendorType, Webhook, WebhookEventType
+from .const import (
+    CONF_SANDBOX,
+    CONF_USER_ID,
+    CONF_WEBHOOK_ID,
+    CONF_WEBHOOK_SECRET,
+    DOMAIN,
+    LOGGER,
+)
 from .coordinator import EnodeConfigEntry
-from .views import ConfigFlowExternalCallbackView
+from .views import ConfigFlowExternalCallbackView, EnodeWebhookView
+from .webhook import prepare_test_webhook
+
+RAND_LENGTH = 32
+SUPPORTED_WEBHOOK_EVENTS = [
+    WebhookEventType.ENODE_WEBHOOK_TEST,
+    *VendorType.VEHICLE.webhook_events,
+]
 
 
-class OAuth2FlowHandler(
-    config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMAIN
-):
+class OAuth2FlowHandler(AbstractOAuth2FlowHandler, domain=DOMAIN):
     """Config flow to handle Enode OAuth2 authentication."""
 
     DOMAIN = DOMAIN
@@ -49,21 +64,22 @@ class OAuth2FlowHandler(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Create an entry for auth."""
+        client_id = getattr(self.flow_impl, "client_id", None)
         if user_input is not None:
-            await self.async_set_unique_id(self.flow_impl.client_id)
+            if client_id is not None:
+                await self.async_set_unique_id(client_id)
             self.user_data = user_input
-            if user_input[CONF_SANDBOX]:
+            if user_input.get(CONF_SANDBOX, False):
                 self.flow_impl.sandbox_mode()
             return await self.async_step_creation(user_input=user_input)
-        client_id = getattr(self.flow_impl, "client_id", None)
+        data_schema = {
+            vol.Required(CONF_USER_ID, default=client_id): str,
+        }
+        if self.show_advanced_options:
+            data_schema[vol.Optional(CONF_SANDBOX, default=False)] = bool
         return self.async_show_form(
             step_id="auth",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_USER_ID, default=client_id): str,
-                    vol.Optional(CONF_SANDBOX, default=False): bool,
-                }
-            ),
+            data_schema=vol.Schema(data_schema),
         )
 
     async def async_step_reconfigure(
@@ -98,7 +114,10 @@ class OAuth2FlowHandler(
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
         """Return subentries supported by this integration."""
-        return {"user_link": UserLinkFlowHandler}
+        types = {"user_link": UserLinkFlowHandler}
+        if config_entry.data.get(CONF_WEBHOOK_ID) is None:
+            types["create_webhook"] = WebhookFlowHandler
+        return types
 
 
 class UserLinkFlowHandler(ConfigSubentryFlow):
@@ -145,3 +164,114 @@ class UserLinkFlowHandler(ConfigSubentryFlow):
         """Handle the user link step."""
         self.hass.config_entries.async_schedule_reload(self._entry_id)
         return self.async_abort(reason="user_linked")
+
+
+class WebhookFlowHandler(ConfigSubentryFlow):
+    """Handle webhook flow."""
+
+    _create_webhook_task: asyncio.Task[None] | None = None
+    _test_webhook_task: asyncio.Task[None] | None = None
+    _delete_webhook_task: asyncio.Task[None] | None = None
+    _webhook: Webhook | None = None
+    _secret: str | None = None
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the webhook step."""
+        if not self._create_webhook_task:
+            self._create_webhook_task = self.hass.async_create_task(
+                self._create_webhook()
+            )
+        if not self._create_webhook_task.done():
+            return self.async_show_progress(
+                progress_action="creating_webhook",
+                progress_task=self._create_webhook_task,
+            )
+        if not self._test_webhook_task:
+            self._test_webhook_task = self.hass.async_create_task(self._test_webhook())
+        if not self._test_webhook_task.done():
+            return self.async_show_progress(
+                progress_action="testing_webhook",
+                progress_task=self._test_webhook_task,
+            )
+        ex = self._test_webhook_task.exception()
+        if ex is not None:
+            if not self._delete_webhook_task:
+                self._delete_webhook_task = self.hass.async_create_task(
+                    self._delete_webhook()
+                )
+            if not self._delete_webhook_task.done():
+                return self.async_show_progress(
+                    progress_action="deleting_webhook",
+                    progress_task=self._delete_webhook_task,
+                )
+        return self.async_show_progress_done(next_step_id="finish")
+
+    async def async_step_finish(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Handle the finish step."""
+        if self._webhook is None or self._secret is None:
+            return self.async_abort(reason="webhook_not_created")
+        return self.async_update_and_abort(
+            entry=self._get_entry(),
+            data_updates={
+                CONF_WEBHOOK_ID: self._webhook.id,
+                CONF_WEBHOOK_SECRET: self._secret,
+            },
+        )
+
+    async def _create_webhook(self) -> None:
+        """Create a webhook."""
+        entry: EnodeConfigEntry = self._get_entry()
+        self.hass.http.register_view(EnodeWebhookView)
+        with suppress(NoURLAvailableError):
+            webhook, secret = await _create_webhook(
+                self.hass,
+                entry.runtime_data.client,
+            )
+            self._webhook = webhook
+            self._secret = secret
+            return
+        LOGGER.debug("No URL available for webhook creation")
+
+    async def _test_webhook(self) -> None:
+        """Test the webhook."""
+        if not self._webhook:
+            return
+        entry: EnodeConfigEntry = self._get_entry()
+        test_future = prepare_test_webhook(self.hass, entry)
+        resp = await entry.runtime_data.client.test_webhook(self._webhook)
+        LOGGER.debug("Webhook test response: %s", resp)
+        if not resp.is_success:
+            raise ValueError("Webhook test failed")
+        await test_future
+
+    async def _delete_webhook(self) -> None:
+        """Delete the webhook."""
+        if not self._webhook:
+            return
+        entry: EnodeConfigEntry = self._get_entry()
+        await entry.runtime_data.client.delete_webhook(self._webhook)
+        LOGGER.debug("Webhook deleted: %s", self._webhook.id)
+        self._webhook = None
+        self._secret = None
+
+
+async def _create_webhook(
+    hass: HomeAssistant,
+    client: EnodeClient,
+) -> tuple[Webhook, str]:
+    """Create a webhook."""
+    url = URL(get_url(hass, allow_internal=False, require_ssl=True)).with_path(
+        EnodeWebhookView.url
+    )
+    secret = get_random_string(RAND_LENGTH)
+    webhook = await client.create_webhook(
+        url=url,
+        secret=secret,
+        events=SUPPORTED_WEBHOOK_EVENTS,
+    )
+    LOGGER.debug("Webhook created: %s", webhook.id)
+    return webhook, secret

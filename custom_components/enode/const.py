@@ -10,6 +10,8 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__package__)
 
 CONF_SANDBOX: Final[str] = "sandbox"
 CONF_USER_ID: Final[str] = "user_id"
+CONF_WEBHOOK_ID: Final[str] = "webhook_id"
+CONF_WEBHOOK_SECRET: Final[str] = "webhook_secret"
 
 DATA_COORDINATORS: Final[str] = "coordinators"
 
@@ -23,3 +25,5 @@ PRODUCTION_API_URL: Final[str] = "https://enode-api.production.enode.io"
 SANDBOX_API_URL: Final[str] = "https://enode-api.sandbox.enode.io"
 
 UPDATE_INTERVAL: Final[timedelta] = timedelta(minutes=5)
+
+HEADER_SIGNATURE: Final[str] = "X-Enode-Signature"

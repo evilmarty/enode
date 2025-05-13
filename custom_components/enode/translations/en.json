@@ -26,6 +26,10 @@
         "data": {
           "user_id": "User ID",
           "sandbox": "Sandbox Mode"
+        },
+        "data_description": {
+          "user_id": "User ID used to link devices. This is not the same as your Enode account email.",
+          "sandbox": "Enable sandbox mode for testing purposes."
         }
       },
       "reconfigure": {
@@ -50,6 +54,26 @@
       "error": {},
       "abort": {
         "user_linked": "Device has been linked"
+      }
+    },
+    "create_webhook": {
+      "initiate_flow": {
+        "user": "Enable webhook"
+      },
+      "step": {
+        "user": {
+          "title": "Enabling webhook"
+        }
+      },
+      "progress": {
+        "creating_webhook": "Creating webhook with Enode",
+        "testing_webhook": "Testing webhook the ensure the integration is working.",
+        "deleting_webhook": "Testing failed, cleaning up the webhook."
+      },
+      "error": {},
+      "abort": {
+        "webhook_created": "Webhook has been created",
+        "webhook_not_created": "Webhook could not be created"
       }
     }
   },

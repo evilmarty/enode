@@ -56,7 +56,7 @@ def _generate_vehicle_sensors(
     coordinator: EnodeVehiclesCoordinator,
 ) -> Generator[BinarySensorEntity]:
     """Generate sensors for vehicles."""
-    for vehicle in coordinator.data:
+    for vehicle in coordinator.data or []:
         LOGGER.debug("Generating binary sensors for vehicle %s", vehicle.id)
         if vehicle.capabilities.charge_state.is_capable:
             LOGGER.debug("Vehicle %s supports charge state", vehicle.id)
