@@ -53,6 +53,9 @@ class EnodeWebhookView(HomeAssistantView):
     async def post(self, request: web.Request) -> None:
         """Handle POST requests."""
         hass: HomeAssistant = request.app["hass"]
+        LOGGER.debug(
+            "Received webhook request with content length %d", request.content_length
+        )
         try:
             signature = request.headers[HEADER_SIGNATURE]
             content = await request.read()
