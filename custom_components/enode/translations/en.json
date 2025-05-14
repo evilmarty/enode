@@ -64,22 +64,22 @@
         "user": {
           "title": "Manage Webhook",
           "menu_options": {
-            "create": "Create Webhook",
+            "create": "Enable Webhook",
             "test": "Test Webhook",
-            "delete": "Delete Webhook"
+            "delete": "Disable Webhook"
           }
         }
       },
       "progress": {
-        "creating_webhook": "Creating webhook with Enode",
-        "create_webhook_failed": "Failed to create webhook",
-        "create_webhook_succeeded": "Webhook has been created",
+        "creating_webhook": "Enabling webhook with Enode",
+        "create_webhook_failed": "Failed to enable webhook",
+        "create_webhook_succeeded": "Webhook has been enabled",
         "testing_webhook": "Testing webhook the ensure the integration is working",
         "test_webhook_succeeded": "Webhook is working",
         "test_webhook_failed": "Webhook test failed with error: {error}",
-        "deleting_webhook": "Deleting webhook",
-        "delete_webhook_succeeded": "Webhook has been deleted",
-        "delete_webhook_failed": "Failed to delete webhook"
+        "deleting_webhook": "Disabling webhook",
+        "delete_webhook_succeeded": "Webhook has been diabled",
+        "delete_webhook_failed": "Failed to disable webhook"
       },
       "error": {},
       "abort": {

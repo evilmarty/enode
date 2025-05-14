@@ -6,6 +6,8 @@
 
 Home Assistant integration for [Enode](https://enode.com), a service that provides integrations with 80+ OEMS and 1000+ energy devices.
 
+Note: Device support is limited to vehicles only. Please request support for other devices if interested.
+
 ## Installation
 
 There are two ways this integration can be installed into [Home Assistant](https://www.home-assistant.io).
@@ -24,11 +26,16 @@ Alternatively, installation can be done manually by copying the files in this re
 ### Configuration
 
 A registered [Enode Developer](https://developers.enode.com/register) account is required before proceeding.
+The account initially is limited to only be able to create sandbox clients. You will have to contact Enode's
+sales team to request they grant you the ability to create production clients.
+
+Note: This may take several days and you may not receive a notification once it has been fulfilled. It may
+be best to check daily whether you are able to create production clients.
 
 #### Create an Enode client
 
 1. Create a new client from the [Enode Developers dashboard](https://developers.enode.com/dashboard).
-2. Select sandbox as the client environment if that is the only option. After you create the client you will have to contact their sales team to request it be granted production access.
+2. Select production as the client environment. If you cannot then see note above.
 3. Create API credentials for the newly created client.
 
 #### Add the Enode integration
@@ -48,3 +55,41 @@ To link a new device that hasn't been integrated with Enode yet.
 1. Navigate to the [Enode integration](https://my.home-assistant.io/redirect/integration/?domain=enode) that has been configured.
 2. Select "Link a device" from the menu next to the configured integration.
 3. Follow the instructions to select the vendor and supported device to link.
+
+## Enabling webhooks
+
+Webhooks allow Enode's API to send updates to the Enode integration providing quicker feedback and updates instead of relying on
+periodic updates. This integration allows enabling, disabling, as well as testing webhooks to ensure the connectivity is working.
+
+Webhooks can be enabled and disabled at any time and does not affect the integration.
+
+To be able to use webhooks your Home Assistant installing must fufill the following criteria:
+
+* Be externally accessible
+  1. Is configured with [an external URL](https://my.home-assistant.io/redirect/network/).
+  2. Is SSL
+  3. Is accessible by Enode's servers. If you need to whitelist their IP addresses see [Enode's information](https://developers.enode.com/docs/webhooks#ip-addresses).
+* Have a Home Assistant cloud subscription (unverified)
+
+### To enable webhooks
+
+1. Navigate to the [Enode integration](https://my.home-assistant.io/redirect/integration/?domain=enode) that has been configured.
+2. Select "Manage Webhook" from the menu next to the configured integration.
+3. Select "Enable Webhook" from the menu options.
+
+### To test webhooks
+
+1. Navigate to the [Enode integration](https://my.home-assistant.io/redirect/integration/?domain=enode) that has been configured.
+2. Select "Manage Webhook" from the menu next to the configured integration.
+3. Select "Test Webhook" from the menu options.
+
+### To disable webhooks
+
+1. Navigate to the [Enode integration](https://my.home-assistant.io/redirect/integration/?domain=enode) that has been configured.
+2. Select "Manage Webhook" from the menu next to the configured integration.
+3. Select "Disable Webhook" from the menu options.
+
+# TODO
+
+* [ ] Verify cloud support for webhooks
+* [ ] Add support for vehicle smart charging
