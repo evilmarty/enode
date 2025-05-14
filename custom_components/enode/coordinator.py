@@ -63,7 +63,7 @@ class EnodeCoordinators:
             self.test_future.cancel()
             self.test_future = None
 
-    def update_vehicle_data(self, vehicle: Vehicle) -> None:
+    async def update_vehicle_data(self, vehicle: Vehicle) -> None:
         """Update vehicle data."""
         self.vehicles.async_set_updated_data(
             [v for v in self.vehicles.data if v.id != vehicle.id] + [vehicle]
