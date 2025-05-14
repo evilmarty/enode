@@ -1,0 +1,24 @@
+name: HACS Action
+
+on:
+  push:
+    paths:
+      - hacs.json
+      - custom_components/enode/*
+  pull_request:
+    paths:
+      - hacs.json
+      - custom_components/enode/*
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  hacs:
+    name: HACS Action
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: HACS Action
+        uses: "hacs/action@main"
+        with:
+          category: integration

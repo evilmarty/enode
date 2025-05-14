@@ -1,0 +1,28 @@
+name: Create release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - custom_components/enode/manifest.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get version from manifest
+        id: manifest
+        run: jq -r 'to_entries|map("\(.key)=\(.value)")|join("\n")' custom_components/enode/manifest.json >> "$GITHUB_OUTPUT"
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{steps.manifest.outputs.version}}"
+          generate_release_notes: true
+          make_latest: true
