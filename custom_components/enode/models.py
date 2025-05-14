@@ -418,7 +418,7 @@ class WebhookEvents(RootModel):
         return self.root[item]
 
 
-class WebhookTestEndpointResponse(BaseModel):
+class WebhookTestEndpoint(BaseModel):
     """Webhook test endpoint response model."""
 
     code: int
@@ -426,12 +426,12 @@ class WebhookTestEndpointResponse(BaseModel):
     body: str
 
 
-class WebhookTestResponse(BaseModel):
+class WebhookTest(BaseModel):
     """Webhook test response model."""
 
     status: Literal["SUCCESS", "FAILURE"]
     description: str
-    response: WebhookTestEndpointResponse | None = Field(default=None)
+    response: WebhookTestEndpoint | None = Field(default=None)
 
     @property
     def is_success(self) -> bool:

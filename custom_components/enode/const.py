@@ -25,5 +25,3 @@ PRODUCTION_API_URL: Final[str] = "https://enode-api.production.enode.io"
 SANDBOX_API_URL: Final[str] = "https://enode-api.sandbox.enode.io"
 
 UPDATE_INTERVAL: Final[timedelta] = timedelta(minutes=5)
-
-HEADER_SIGNATURE: Final[str] = "X-Enode-Signature"

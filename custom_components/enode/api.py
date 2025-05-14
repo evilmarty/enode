@@ -20,7 +20,7 @@ from .models import (
     VendorType,
     Webhook,
     WebhookEventType,
-    WebhookTestResponse,
+    WebhookTest,
 )
 
 SCOPES = [
@@ -184,18 +184,18 @@ class EnodeClient:
         """Delete a webhook."""
         if isinstance(webhook, Webhook):
             webhook = webhook.id
-        await self._make_request(
+        return await self._make_request(
             None,
             method=METH_DELETE,
             path=f"/webhooks/{webhook}",
         )
 
-    async def test_webhook(self, webhook: str | Webhook) -> WebhookTestResponse:
+    async def test_webhook(self, webhook: str | Webhook) -> WebhookTest:
         """Test a webhook."""
         if isinstance(webhook, Webhook):
             webhook = webhook.id
-        await self._make_request(
-            WebhookTestResponse,
+        return await self._make_request(
+            WebhookTest,
             method=METH_POST,
             path=f"/webhooks/{webhook}/test",
         )

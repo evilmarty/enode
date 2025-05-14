@@ -56,41 +56,36 @@
         "user_linked": "Device has been linked"
       }
     },
-    "create_webhook": {
+    "webhook": {
       "initiate_flow": {
-        "user": "Enable webhook"
+        "user": "Manage Webhook"
       },
       "step": {
         "user": {
-          "title": "Enabling webhook"
+          "title": "Manage Webhook",
+          "menu_options": {
+            "create": "Create Webhook",
+            "test": "Test Webhook",
+            "delete": "Delete Webhook"
+          }
         }
       },
       "progress": {
         "creating_webhook": "Creating webhook with Enode",
+        "create_webhook_failed": "Failed to create webhook",
+        "create_webhook_succeeded": "Webhook created successfully",
         "testing_webhook": "Testing webhook the ensure the integration is working.",
-        "deleting_webhook": "Testing failed, cleaning up the webhook."
+        "test_webhook_succeeded": "Webhook test succeeded",
+        "test_webhook_failed": "Webhook test failed",
+        "deleting_webhook": "Testing failed, cleaning up the webhook.",
+        "delete_webhook_succeeded": "Webhook deleted successfully",
+        "delete_webhook_failed": "Failed to delete webhook"
       },
       "error": {},
       "abort": {
         "webhook_created": "Webhook has been created",
-        "webhook_not_created": "Webhook could not be created"
-      }
-    },
-    "delete_webhook": {
-      "initiate_flow": {
-        "user": "Delete webhook"
-      },
-      "step": {
-        "user": {
-          "title": "Removing webhook"
-        }
-      },
-      "progress": {
-        "deleting_webhook": "Deleting webhook."
-      },
-      "error": {},
-      "abort": {
-        "webhook_deleted": "Webhook has been deleted"
+        "webhook_not_created": "Webhook could not be created",
+        "external_url_unavailable": "External URL is not available. Please check your Home Assistant Network configuration."
       }
     }
   },
