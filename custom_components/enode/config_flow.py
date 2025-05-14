@@ -313,11 +313,14 @@ class WebhookFlowHandler(ConfigSubentryFlow):
         if not self._done_task:
             self._done_task = self.hass.async_create_task(asyncio.sleep(5))
         if not self._done_task.done():
-            progress_action = (
-                failure_action if self._task.exception() else success_action
-            )
+            placeholders = {}
+            progress_action = success_action
+            if ex := self._task.exception():
+                progress_action = failure_action
+                placeholders["error"] = str(ex)
             return self.async_show_progress(
                 progress_action=progress_action,
                 progress_task=self._done_task,
+                description_placeholders=placeholders,
             )
         return self.async_show_progress_done(next_step_id="user")
