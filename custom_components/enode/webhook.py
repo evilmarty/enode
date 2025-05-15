@@ -6,40 +6,55 @@ from homeassistant.core import HomeAssistant
 
 from .const import LOGGER
 from .coordinator import EnodeConfigEntry
-from .models import WebhookEvents, WebhookTestEvent, WebhookUserVehicleUpdatedEvent
+from .models import (
+    WebhookEvents,
+    WebhookSystemHeartbeatEvent,
+    WebhookTestEvent,
+    WebhookUserVehicleUpdatedEvent,
+)
 
 
-async def _complete_test_webhook(
-    entry: EnodeConfigEntry, event: WebhookTestEvent
-) -> None:
-    """Handle test webhook."""
-    if test_future := entry.runtime_data.test_future:
-        test_future.set_result(True)
-        entry.runtime_data.test_future = None
+class WebhookProcessor:
+    """Process webhook events."""
 
+    def __init__(self, entry: EnodeConfigEntry) -> None:
+        """Initialize the webhook processor."""
+        self.entry = entry
 
-async def _user_vehicle_updated(
-    entry: EnodeConfigEntry, event: WebhookUserVehicleUpdatedEvent
-) -> None:
-    """Handle user vehicle updated webhook."""
-    await entry.runtime_data.update_vehicle_data(event.vehicle)
+    def handle_user_vehicle_updated(
+        self, event: WebhookUserVehicleUpdatedEvent
+    ) -> None:
+        """Handle user vehicle updated webhook."""
+        self.entry.runtime_data.update_vehicle_data(event.vehicle)
 
+    def handle_system_heartbeat(self, event: WebhookSystemHeartbeatEvent) -> None:
+        """Handle system heartbeat webhook."""
+        LOGGER.debug(
+            "Received system heartbeat event with %d pending events",
+            event.pending_events,
+        )
 
-EVENT_HANDLER_MAPPING = {
-    WebhookTestEvent: _complete_test_webhook,
-    WebhookUserVehicleUpdatedEvent: _user_vehicle_updated,
-}
+    def handle_enode_webhook_test(self, event: WebhookTestEvent) -> None:
+        """Handle test webhook."""
+        if test_future := self.entry.runtime_data.test_future:
+            test_future.set_result(True)
+            self.entry.runtime_data.test_future = None
+
+    def process(self, events: WebhookEvents) -> None:
+        """Process webhook events."""
+        for event in events:
+            handler_name = f"handle_{event.event.replace(':', '_').lower()}"
+            if handler := getattr(self, handler_name, None):
+                handler(event)
+            else:
+                LOGGER.debug("Received unsupported webhook event: %s", event.event)
 
 
 async def process_webhook_events(
     entry: EnodeConfigEntry, events: WebhookEvents
 ) -> None:
     """Process webhook events."""
-    for event in events:
-        if handler := EVENT_HANDLER_MAPPING.get(type(event)):
-            await handler(entry, event)
-        else:
-            LOGGER.debug("Received unsupported webhook event: %s", event.event)
+    WebhookProcessor(entry).process(events)
 
 
 def prepare_test_webhook(
