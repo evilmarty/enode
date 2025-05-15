@@ -1,7 +1,7 @@
 {
   "domain": "enode",
   "name": "Enode",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "codeowners": ["@evilmarty"],
   "config_flow": true,
   "dependencies": ["application_credentials"],
