@@ -8,8 +8,8 @@ DOMAIN: Final[str] = "enode"
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__package__)
 
-ACTION_START: Final[str] = "start"
-ACTION_STOP: Final[str] = "stop"
+ACTION_START: Final[str] = "START"
+ACTION_STOP: Final[str] = "STOP"
 
 CONF_SANDBOX: Final[str] = "sandbox"
 CONF_USER_ID: Final[str] = "user_id"
