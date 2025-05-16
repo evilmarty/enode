@@ -5,10 +5,6 @@ on:
     paths:
       - hacs.json
       - custom_components/enode/*
-  pull_request:
-    paths:
-      - hacs.json
-      - custom_components/enode/*
   schedule:
     - cron: "0 0 * * *"
 
