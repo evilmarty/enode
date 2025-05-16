@@ -11,10 +11,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import EnodeClient
-from .const import LOGGER
+from .const import ACTION_START, ACTION_STOP, LOGGER
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
-from .models import Vehicle
 
 
 async def async_setup_entry(
@@ -44,29 +43,19 @@ def _generate_vehicle_switches(
             or vehicle.capabilities.stop_charging.is_capable
         ):
             LOGGER.debug("Adding vehicle charge switch for %s", vehicle.id)
-            yield VehicleChargeSwitch(coordinator, client, vehicle)
+            yield VehicleChargeSwitch(
+                coordinator=coordinator, client=client, vehicle=vehicle
+            )
 
 
 class VehicleChargeSwitch(VehicleEntity[EnodeVehiclesCoordinator], SwitchEntity):
     """Switch for vehicle charge state."""
 
-    def __init__(
-        self,
-        coordinator: EnodeVehiclesCoordinator,
-        client: EnodeClient,
-        vehicle: Vehicle,
-    ) -> None:
-        """Initialize the vehicle charge switch."""
-        super().__init__(
-            coordinator=coordinator,
-            vehicle=vehicle,
-            description=SwitchEntityDescription(
-                key="is_charging",
-                translation_key="charge_state_is_charging",
-                device_class=SwitchDeviceClass.SWITCH,
-            ),
-        )
-        self.client = client
+    entity_description = SwitchEntityDescription(
+        key="is_charging",
+        translation_key="charge_state_is_charging",
+        device_class=SwitchDeviceClass.SWITCH,
+    )
 
     @property
     def is_on(self) -> bool | None:
@@ -78,9 +67,16 @@ class VehicleChargeSwitch(VehicleEntity[EnodeVehiclesCoordinator], SwitchEntity)
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on charging for the vehicle."""
         if (vehicle := self.vehicle) and vehicle.capabilities.start_charging.is_capable:
-            await self.client.control_charging(vehicle_id=vehicle.id, action="START")
+            await self.async_control_charging(action=ACTION_START)
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off charging for the vehicle."""
         if (vehicle := self.vehicle) and vehicle.capabilities.stop_charging.is_capable:
-            await self.client.control_charging(vehicle_id=vehicle.id, action="STOP")
+            await self.async_control_charging(action=ACTION_STOP)
+
+    async def async_control_charging(
+        self,
+        action: str,
+    ) -> None:
+        """Control the charging state of the vehicle."""
+        await self.client.control_charging(vehicle_id=self.vehicle_id, action=action)

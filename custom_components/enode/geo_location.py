@@ -11,12 +11,6 @@ from .const import LOGGER, STATE_REACHABLE, STATE_UNREACHABLE
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
 
-DESCRIPTION = EntityDescription(
-    key="location",
-    translation_key="location",
-    icon="mdi:map-marker",
-)
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -42,13 +36,17 @@ def _generate_vehicle_sensors(
         LOGGER.debug("Generating sensors for vehicle %s", vehicle.id)
         if vehicle.capabilities.location.is_capable:
             LOGGER.debug("Vehicle %s supports location", vehicle.id)
-            yield VehicleGeolocation(
-                coordinator=coordinator, vehicle=vehicle, description=DESCRIPTION
-            )
+            yield VehicleGeolocation(coordinator=coordinator, vehicle=vehicle)
 
 
 class VehicleGeolocation(VehicleEntity[EnodeVehiclesCoordinator], GeolocationEvent):
     """Representation of a vehicle's geolocation."""
+
+    entity_description = EntityDescription(
+        key="location",
+        translation_key="location",
+        icon="mdi:map-marker",
+    )
 
     @property
     def state(self) -> str | None:

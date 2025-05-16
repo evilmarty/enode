@@ -6,6 +6,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
+from .api import EnodeClient
 from .const import DOMAIN
 from .models import Vehicle
 
@@ -40,14 +41,17 @@ class VehicleEntity[_DataUpdateCoordinatorT: DataUpdateCoordinator](
         self,
         coordinator: _DataUpdateCoordinatorT,
         vehicle: Vehicle,
-        description: EntityDescription,
+        client: EnodeClient | None = None,
+        description: EntityDescription | None = None,
     ) -> None:
         """Initialize the vehicle entity."""
         super().__init__(coordinator)
-        self.entity_description = description
+        if description is not None:
+            self.entity_description = description
         self.vehicle_id = vehicle.id
+        self.client = client
         self.device_info = _get_vehicle_device_info(vehicle)
-        self._attr_unique_id = f"vehicle_{vehicle.id}_{description.key}"
+        self._attr_unique_id = f"vehicle_{vehicle.id}_{self.entity_description.key}"
         self._attr_extra_state_attributes = {
             "vehicle_id": vehicle.id,
             "user_id": vehicle.user_id,
