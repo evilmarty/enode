@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 
+from homeassistant.components import persistent_notification
 from homeassistant.components.button import (
     ButtonDeviceClass,
     ButtonEntity,
@@ -11,7 +12,8 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import EnodeClient
+from .api import EnodeClient, EnodeError
+from .const import LOGGER
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
 
@@ -55,4 +57,18 @@ class VehicleRefreshButton(VehicleEntity[EnodeVehiclesCoordinator], ButtonEntity
 
     async def async_press(self) -> None:
         """Press the button to refresh vehicle data."""
-        await self.client.refresh_vehicle_data(self.vehicle_id)
+        try:
+            await self.client.refresh_vehicle_data(self.vehicle_id)
+        except EnodeError as err:
+            LOGGER.error(
+                "Failed to refresh data for vehicle %s: %s - %s",
+                self.vehicle_id,
+                err.data.title,
+                err.data.detail,
+            )
+            persistent_notification.create(
+                hass=self.hass,
+                message=err.data.detail,
+                title=self._friendly_name_internal(),
+                notification_id=f"{self.entity_id}_notification",
+            )

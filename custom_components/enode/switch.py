@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 
+from homeassistant.components import persistent_notification
 from homeassistant.components.switch import (
     SwitchDeviceClass,
     SwitchEntity,
@@ -10,7 +11,7 @@ from homeassistant.components.switch import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import EnodeClient
+from .api import EnodeClient, EnodeError
 from .const import ACTION_START, ACTION_STOP, LOGGER
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
@@ -79,4 +80,20 @@ class VehicleChargeSwitch(VehicleEntity[EnodeVehiclesCoordinator], SwitchEntity)
         action: str,
     ) -> None:
         """Control the charging state of the vehicle."""
-        await self.client.control_charging(vehicle_id=self.vehicle_id, action=action)
+        try:
+            await self.client.control_charging(
+                vehicle_id=self.vehicle_id, action=action
+            )
+        except EnodeError as err:
+            LOGGER.error(
+                "Failed to control charging for vehicle %s: %s - %s",
+                self.vehicle_id,
+                err.data.title,
+                err.data.detail,
+            )
+            persistent_notification.create(
+                hass=self.hass,
+                message=err.data.detail,
+                title=self._friendly_name_internal(),
+                notification_id=f"{self.entity_id}_notification",
+            )
