@@ -4,15 +4,15 @@
       "charge_state_power_delivery_state": {
         "default": "mdi:power-cycle",
         "state": {
-          "UNKNOWN": "mdi:battery-unknown",
-          "UNPLUGGED": "mdi:power-plug-off",
-          "PLUGGED_IN:INITIALIZING": "mdi:power-plug",
-          "PLUGGED_IN:CHARGING": "mdi:battery-charging",
-          "PLUGGED_IN:STOPPED": "mdi:battery",
-          "PLUGGED_IN:COMPLETED": "mdi:battery-charging-100",
-          "PLUGGED_IN:NO_POWER": "mdi:flash-alert",
-          "PLUGGED_IN:FAULT": "mdi:battery-alert",
-          "PLUGGED_IN:DISCHARGING": "mdi:battery-minus"
+          "unknown": "mdi:battery-unknown",
+          "unplugged": "mdi:power-plug-off",
+          "initializing": "mdi:power-plug",
+          "charging": "mdi:battery-charging",
+          "stopped": "mdi:battery",
+          "completed": "mdi:battery-charging-100",
+          "no_power": "mdi:flash-alert",
+          "fault": "mdi:battery-alert",
+          "discharging": "mdi:battery-minus"
         }
       }
     }
