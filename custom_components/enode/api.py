@@ -113,6 +113,16 @@ class EnodeClient:
         )
         return response.data
 
+    async def refresh_vehicle_data(self, vehicle: str | Vehicle) -> None:
+        """Refresh vehicle data."""
+        if isinstance(vehicle, Vehicle):
+            vehicle = vehicle.id
+        return await self._make_request(
+            None,
+            method=METH_POST,
+            path=f"/vehicles/{vehicle}/refresh-hint",
+        )
+
     async def user_link(
         self,
         user_id: str,

@@ -147,6 +147,11 @@
         "name": "Smart Charging"
       }
     },
+    "button": {
+      "vehicle_refresh": {
+        "name": "Refresh Data"
+      }
+    },
     "geo_location": {
       "location": {
         "name": "Location",
