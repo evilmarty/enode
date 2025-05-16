@@ -8,6 +8,9 @@ DOMAIN: Final[str] = "enode"
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__package__)
 
+ACTION_START: Final[str] = "start"
+ACTION_STOP: Final[str] = "stop"
+
 CONF_SANDBOX: Final[str] = "sandbox"
 CONF_USER_ID: Final[str] = "user_id"
 CONF_WEBHOOK_ID: Final[str] = "webhook_id"
