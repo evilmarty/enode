@@ -10,6 +10,7 @@ from .models import (
     WebhookEvents,
     WebhookSystemHeartbeatEvent,
     WebhookTestEvent,
+    WebhookUserCredentialsInvalidatedEvent,
     WebhookUserVehicleUpdatedEvent,
 )
 
@@ -17,8 +18,9 @@ from .models import (
 class WebhookProcessor:
     """Process webhook events."""
 
-    def __init__(self, entry: EnodeConfigEntry) -> None:
+    def __init__(self, hass: HomeAssistant, entry: EnodeConfigEntry) -> None:
         """Initialize the webhook processor."""
+        self.hass = hass
         self.entry = entry
 
     def handle_user_vehicle_updated(
@@ -40,6 +42,12 @@ class WebhookProcessor:
             test_future.set_result(True)
             self.entry.runtime_data.test_future = None
 
+    def handle_user_credentials_invalidated(
+        self, event: WebhookUserCredentialsInvalidatedEvent
+    ) -> None:
+        """Handle user credentials invalidated webhook."""
+        self.entry.async_start_reauth(self.hass)
+
     def process(self, events: WebhookEvents) -> None:
         """Process webhook events."""
         for event in events:
@@ -51,10 +59,10 @@ class WebhookProcessor:
 
 
 async def process_webhook_events(
-    entry: EnodeConfigEntry, events: WebhookEvents
+    hass: HomeAssistant, entry: EnodeConfigEntry, events: WebhookEvents
 ) -> None:
     """Process webhook events."""
-    WebhookProcessor(entry).process(events)
+    WebhookProcessor(hass, entry).process(events)
 
 
 def prepare_test_webhook(

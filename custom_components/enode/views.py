@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import UnknownFlow
 
-from .const import CONF_WEBHOOK_SECRET, DOMAIN, LOGGER
+from .const import CONF_WEBHOOK_SECRET, LOGGER
 from .models import WebhookEvents
 from .webhook import process_webhook_events
 
@@ -82,7 +82,7 @@ class EnodeWebhookView(HomeAssistantView):
         webhook_events = WebhookEvents.model_validate_json(content)
         entry.async_create_background_task(
             hass=hass,
-            target=process_webhook_events(entry, webhook_events),
+            target=process_webhook_events(hass, entry, webhook_events),
             name="enode_webhook",
         )
         return web_response.Response(
