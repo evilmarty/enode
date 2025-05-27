@@ -1,9 +1,5 @@
 # Enode
 
-** This integration is still in development and is currently configured to use Enode's sandbox environment. **
-
-## Description
-
 Home Assistant integration for [Enode](https://enode.com), a service that provides integrations with 80+ OEMS and 1000+ energy devices.
 
 Note: Device support is limited to vehicles only. Please request support for other devices if interested.
