@@ -152,6 +152,11 @@
         "name": "Refresh Data"
       }
     },
+    "device_tracker": {
+      "location": {
+        "name": "Location"
+      }
+    },
     "geo_location": {
       "location": {
         "name": "Location",

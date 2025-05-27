@@ -1,13 +1,15 @@
-"""Geo Location platform for Enode integration."""
+"""Device Tracker platform for Enode integration."""
 
 from collections.abc import Generator
 
-from homeassistant.components.geo_location import GeolocationEvent
+from homeassistant.components.device_tracker import (
+    TrackerEntity,
+    TrackerEntityDescription,
+)
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import LOGGER, STATE_REACHABLE, STATE_UNREACHABLE
+from .const import LOGGER
 from .coordinator import EnodeConfigEntry, EnodeCoordinators, EnodeVehiclesCoordinator
 from .entity import VehicleEntity
 
@@ -18,50 +20,35 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Enode sensor platform."""
-    async_add_entities(_generate_sensors(config_entry.runtime_data))
+    async_add_entities(_generate_trackers(config_entry.runtime_data))
 
 
-def _generate_sensors(
+def _generate_trackers(
     coordinator: EnodeCoordinators,
-) -> Generator[GeolocationEvent]:
-    """Generate Enode sensors."""
-    yield from _generate_vehicle_sensors(coordinator.vehicles)
+) -> Generator[TrackerEntity]:
+    """Generate Enode trackers."""
+    yield from _generate_vehicle_trackers(coordinator.vehicles)
 
 
-def _generate_vehicle_sensors(
+def _generate_vehicle_trackers(
     coordinator: EnodeVehiclesCoordinator,
-) -> Generator[GeolocationEvent]:
-    """Generate sensors for vehicles."""
+) -> Generator[TrackerEntity]:
+    """Generate trackers for vehicles."""
     for vehicle in coordinator.data or []:
-        LOGGER.debug("Generating sensors for vehicle %s", vehicle.id)
+        LOGGER.debug("Generating tracker for vehicle %s", vehicle.id)
         if vehicle.capabilities.location.is_capable:
             LOGGER.debug("Vehicle %s supports location", vehicle.id)
-            yield VehicleGeolocation(coordinator=coordinator, vehicle=vehicle)
+            yield VehicleTracker(coordinator=coordinator, vehicle=vehicle)
 
 
-class VehicleGeolocation(VehicleEntity[EnodeVehiclesCoordinator], GeolocationEvent):
-    """Representation of a vehicle's geolocation."""
+class VehicleTracker(VehicleEntity[EnodeVehiclesCoordinator], TrackerEntity):
+    """Representation of a vehicle's location."""
 
-    entity_description = EntityDescription(
+    entity_description = TrackerEntityDescription(
         key="location",
         translation_key="location",
         icon="mdi:map-marker",
-        entity_registry_enabled_default=False,
     )
-
-    @property
-    def state(self) -> str | None:
-        """Return the state of the geolocation."""
-        if vehicle := self.vehicle:
-            return STATE_REACHABLE if vehicle.is_reachable else STATE_UNREACHABLE
-        return None
-
-    @property
-    def source(self) -> str:
-        """Return the source of the geolocation."""
-        if vehicle := self.vehicle:
-            return vehicle.vendor
-        return ""
 
     @property
     def latitude(self) -> float | None:

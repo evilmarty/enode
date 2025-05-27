@@ -13,6 +13,7 @@ from .views import EnodeWebhookView
 _PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
+    Platform.DEVICE_TRACKER,
     Platform.GEO_LOCATION,
     Platform.SENSOR,
     Platform.SWITCH,
