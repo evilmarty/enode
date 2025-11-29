@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - hacs.json
-      - custom_components/enode/*
+      - custom_components/enode/**
   schedule:
     - cron: "0 0 * * *"
 
