@@ -258,7 +258,7 @@ class WebhookFlowHandler(ConfigSubentryFlow):
     async def _create_webhook(self) -> None:
         """Create a webhook."""
         entry: EnodeConfigEntry = self._get_entry()
-        if entry.data.get(CONF_WEBHOOK_ID):
+        if entry.data.get(CONF_WEBHOOK_ID) or not self._url:
             return
         self.hass.http.register_view(EnodeWebhookView)
         LOGGER.debug("Creating webhook with URL: %s", self._url)

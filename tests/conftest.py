@@ -22,7 +22,7 @@ def mock_vehicle_data():
             "vin": "123",
             "brand": "Tesla",
             "model": "Model 3",
-            "year": 2022
+            "year": 2022,
         },
         "chargeState": {
             "chargeMode": 10.0,
@@ -36,18 +36,15 @@ def mock_vehicle_data():
             "chargeLimit": 80.0,
             "lastUpdated": "2023-01-01T00:00:00Z",
             "powerDeliveryState": "PLUGGED_IN:CHARGING",
-            "maxCurrent": 32.0
+            "maxCurrent": 32.0,
         },
         "location": {
             "id": "l1",
             "latitude": 59.3293,
             "longitude": 18.0686,
-            "lastUpdated": "2023-01-01T00:00:00Z"
+            "lastUpdated": "2023-01-01T00:00:00Z",
         },
-        "odometer": {
-            "distance": 10000.0,
-            "lastUpdated": "2023-01-01T00:00:00Z"
-        },
+        "odometer": {"distance": 10000.0, "lastUpdated": "2023-01-01T00:00:00Z"},
         "capabilities": {
             "information": {"isCapable": True, "interventionIds": []},
             "chargeState": {"isCapable": True, "interventionIds": []},
@@ -56,24 +53,28 @@ def mock_vehicle_data():
             "setMaxCurrent": {"isCapable": True, "interventionIds": []},
             "startCharging": {"isCapable": True, "interventionIds": []},
             "stopCharging": {"isCapable": True, "interventionIds": []},
-            "smartCharging": {"isCapable": True, "interventionIds": []}
+            "smartCharging": {"isCapable": True, "interventionIds": []},
         },
-        "scopes": ["vehicle:read:data"]
+        "scopes": ["vehicle:read:data"],
     }
+
 
 @pytest.fixture
 def hass():
     """Mock Home Assistant."""
     hass = MagicMock(spec=HomeAssistant)
+    hass.config = MagicMock(language="en")
     hass.data = {}
     hass.config_entries = MagicMock()
     return hass
+
 
 @pytest.fixture
 def mock_enode_client():
     """Mock Enode client."""
     with patch("custom_components.enode.api.EnodeClient", autospec=True) as mock:
         yield mock.return_value
+
 
 @pytest.fixture
 def mock_vehicle(mock_vehicle_data):

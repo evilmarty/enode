@@ -1,65 +1,83 @@
 """Tests for Enode switches."""
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.enode.coordinator import EnodeCoordinators
-from custom_components.enode.switch import VehicleChargeSwitch, async_setup_entry
+from custom_components.enode.switch import VehicleChargeSwitch
 
 
-@pytest.mark.asyncio
-async def test_switch_setup(hass, mock_vehicle):
-    """Test switch setup."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
+class TestVehicleChargeSwitch:
+    """Test VehicleChargeSwitch class."""
 
-    client = MagicMock()
-    coordinators = MagicMock(spec=EnodeCoordinators)
-    coordinators.client = client
-    coordinators.vehicles = MagicMock()
-    coordinators.vehicles.data = [mock_vehicle]
-    entry.runtime_data = coordinators
+    def test_is_on(self, mock_vehicle):
+        """Test is_on property."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        client = MagicMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-    async_add_entities = MagicMock()
+        assert switch.is_on is True
 
-    await async_setup_entry(hass, entry, async_add_entities)
+        mock_vehicle.charge_state.is_charging = False
+        assert switch.is_on is False
 
-    assert async_add_entities.called
-    entities = list(async_add_entities.call_args[0][0])
-    assert len(entities) == 1
+    def test_is_on_missing(self, mock_vehicle):
+        """Test is_on when is_charging is None."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        mock_vehicle.charge_state.is_charging = None
+        client = MagicMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-    switch = entities[0]
-    assert isinstance(switch, VehicleChargeSwitch)
-    assert switch.is_on is True
+        assert switch.is_on is None
 
-@pytest.mark.asyncio
-async def test_switch_turn_on(hass, mock_vehicle):
-    """Test switch turn on."""
-    client = MagicMock()
-    client.control_charging = AsyncMock()
+    def test_is_on_no_vehicle(self, mock_vehicle):
+        """Test is_on when vehicle is None."""
+        coordinator = MagicMock()
+        coordinator.data = []
+        client = MagicMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-    coordinator = SimpleNamespace(data=[mock_vehicle])
+        assert switch.is_on is None
 
-    switch = VehicleChargeSwitch(coordinator=coordinator, vehicle=mock_vehicle, client=client)
-    switch.hass = hass
+    @pytest.mark.asyncio
+    async def test_async_turn_on(self, mock_vehicle):
+        """Test async_turn_on."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        client = MagicMock()
+        client.control_charging = AsyncMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-    await switch.async_turn_on()
+        await switch.async_turn_on()
+        client.control_charging.assert_called_once_with(
+            vehicle_id=mock_vehicle.id, action="START"
+        )
 
-    client.control_charging.assert_called_once_with(vehicle_id="v1", action="START")
+    @pytest.mark.asyncio
+    async def test_async_turn_off(self, mock_vehicle):
+        """Test async_turn_off."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        client = MagicMock()
+        client.control_charging = AsyncMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-@pytest.mark.asyncio
-async def test_switch_turn_off(hass, mock_vehicle):
-    """Test switch turn off."""
-    client = MagicMock()
-    client.control_charging = AsyncMock()
+        await switch.async_turn_off()
+        client.control_charging.assert_called_once_with(
+            vehicle_id=mock_vehicle.id, action="STOP"
+        )
 
-    coordinator = SimpleNamespace(data=[mock_vehicle])
+    @pytest.mark.asyncio
+    async def test_async_turn_on_not_capable(self, mock_vehicle):
+        """Test async_turn_on when not capable."""
+        mock_vehicle.capabilities.start_charging.is_capable = False
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        client = MagicMock()
+        client.control_charging = AsyncMock()
+        switch = VehicleChargeSwitch(coordinator, mock_vehicle, client=client)
 
-    switch = VehicleChargeSwitch(coordinator=coordinator, vehicle=mock_vehicle, client=client)
-    switch.hass = hass
-
-    await switch.async_turn_off()
-
-    client.control_charging.assert_called_once_with(vehicle_id="v1", action="STOP")
+        await switch.async_turn_on()
+        client.control_charging.assert_not_called()

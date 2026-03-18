@@ -4,33 +4,100 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from custom_components.enode.binary_sensor import async_setup_entry
-from custom_components.enode.coordinator import EnodeCoordinators
+from custom_components.enode.binary_sensor import (
+    VehicleChargeStateBinarySensor,
+    VehicleSmartChargingBinarySensor,
+)
+from custom_components.enode.models import Vehicle
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 
 
-@pytest.mark.asyncio
-async def test_binary_sensor_setup(hass, mock_vehicle):
-    """Test binary sensor setup."""
-    entry = MagicMock()
-    entry.entry_id = "test_entry"
+class TestVehicleChargeStateBinarySensor:
+    """Test VehicleChargeStateBinarySensor class."""
 
-    coordinators = MagicMock(spec=EnodeCoordinators)
-    coordinators.vehicles = MagicMock()
-    coordinators.vehicles.data = [mock_vehicle]
-    entry.runtime_data = coordinators
+    def test_is_on(self, mock_vehicle):
+        """Test is_on property."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        description = BinarySensorEntityDescription(key="is_plugged_in")
+        sensor = VehicleChargeStateBinarySensor(
+            coordinator, mock_vehicle, description=description
+        )
 
-    async_add_entities = MagicMock()
+        assert sensor.is_on is True
 
-    await async_setup_entry(hass, entry, async_add_entities)
+        mock_vehicle.charge_state.is_plugged_in = False
+        assert sensor.is_on is False
 
-    assert async_add_entities.called
-    entities = list(async_add_entities.call_args[0][0])
-    assert len(entities) > 0
+    def test_is_on_missing(self, mock_vehicle):
+        """Test is_on when value is None."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        mock_vehicle.charge_state.is_plugged_in = None
+        description = BinarySensorEntityDescription(key="is_plugged_in")
+        sensor = VehicleChargeStateBinarySensor(
+            coordinator, mock_vehicle, description=description
+        )
 
-    plugged_in_sensor = next((e for e in entities if e.entity_description.key == "is_plugged_in"), None)
-    assert plugged_in_sensor is not None
-    assert plugged_in_sensor.is_on is True
+        assert sensor.is_on is None
 
-    fully_charged_sensor = next((e for e in entities if e.entity_description.key == "is_fully_charged"), None)
-    assert fully_charged_sensor is not None
-    assert fully_charged_sensor.is_on is False
+    def test_is_on_no_vehicle(self, mock_vehicle):
+        """Test is_on when vehicle is None."""
+        coordinator = MagicMock()
+        coordinator.data = []
+        description = BinarySensorEntityDescription(key="is_plugged_in")
+        sensor = VehicleChargeStateBinarySensor(
+            coordinator, mock_vehicle, description=description
+        )
+
+        assert sensor.is_on is None
+
+
+class TestVehicleSmartChargingBinarySensor:
+    """Test VehicleSmartChargingBinarySensor class."""
+
+    def test_is_on(self, mock_vehicle_data):
+        """Test is_on property."""
+        mock_vehicle_data["capabilities"]["smartCharging"]["isCapable"] = True
+        mock_vehicle_data["smartChargingPolicy"] = {
+            "deadline": "08:00:00",
+            "isEnabled": True,
+            "minimumChargeLimit": 20.0,
+        }
+        vehicle = Vehicle.model_validate(mock_vehicle_data)
+
+        coordinator = MagicMock()
+        coordinator.data = [vehicle]
+        description = BinarySensorEntityDescription(key="is_enabled")
+        sensor = VehicleSmartChargingBinarySensor(
+            coordinator, vehicle, description=description
+        )
+
+        assert sensor.is_on is True
+
+        vehicle.smart_charging_policy.is_enabled = False
+        assert sensor.is_on is False
+
+    def test_is_on_missing_policy(self, mock_vehicle):
+        """Test is_on when smart_charging_policy is None."""
+        coordinator = MagicMock()
+        coordinator.data = [mock_vehicle]
+        mock_vehicle.smart_charging_policy = None
+        description = BinarySensorEntityDescription(key="is_enabled")
+        sensor = VehicleSmartChargingBinarySensor(
+            coordinator, mock_vehicle, description=description
+        )
+
+        with pytest.raises(AttributeError):
+            _ = sensor.is_on
+
+    def test_is_on_no_vehicle(self, mock_vehicle):
+        """Test is_on when vehicle is None."""
+        coordinator = MagicMock()
+        coordinator.data = []
+        description = BinarySensorEntityDescription(key="is_enabled")
+        sensor = VehicleSmartChargingBinarySensor(
+            coordinator, mock_vehicle, description=description
+        )
+
+        assert sensor.is_on is None
