@@ -12,8 +12,9 @@ from .api import EnodeClient
 from .const import CONF_USER_ID, LOGGER, UPDATE_INTERVAL
 from .models import Vehicle
 
-type EnodeConfigEntry = ConfigEntry[EnodeCoordinators]
-type EnodeVehiclesCoordinator = DataUpdateCoordinator[list[Vehicle]]
+
+class EnodeVehiclesCoordinator(DataUpdateCoordinator[list[Vehicle]]):
+    """Vehicles coordinator for Enode."""
 
 
 class EnodeCoordinators:
@@ -31,7 +32,7 @@ class EnodeCoordinators:
         """Initialize Enode Coordinator."""
         self.client = client
         self.user_id = config_entry.data.get(CONF_USER_ID) if config_entry else None
-        self.vehicles = DataUpdateCoordinator[list[Vehicle]](
+        self.vehicles = EnodeVehiclesCoordinator(
             hass=hass,
             logger=LOGGER,
             config_entry=config_entry,
@@ -68,3 +69,7 @@ class EnodeCoordinators:
         self.vehicles.async_set_updated_data(
             [v for v in self.vehicles.data if v.id != vehicle.id] + [vehicle]
         )
+
+
+class EnodeConfigEntry(ConfigEntry[EnodeCoordinators]):
+    """Config entry for Enode."""

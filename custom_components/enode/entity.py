@@ -15,19 +15,21 @@ def _get_vehicle_device_info(
     vehicle: Vehicle,
 ) -> DeviceInfo:
     """Get device info for a vehicle."""
-    info = {
-        "identifiers": {(DOMAIN, vehicle.id)},
-    }
+    indentifiers = {(DOMAIN, vehicle.id)}
     if vehicle.capabilities.information.is_capable:
-        info["identifiers"].add((DOMAIN, vehicle.information.vin))
-        info["name"] = (
-            vehicle.information.display_name  # Display name can be none
-            or f"{vehicle.information.brand} {vehicle.information.model}"
+        if vehicle.information.vin:
+            indentifiers.add((DOMAIN, vehicle.information.vin))
+        return DeviceInfo(
+            identifiers=indentifiers,
+            name=(
+                vehicle.information.display_name  # Display name can be none
+                or f"{vehicle.information.brand} {vehicle.information.model}"
+            ),
+            manufacturer=vehicle.information.brand,
+            model=vehicle.information.model,
+            serial_number=vehicle.information.vin,
         )
-        info["manufacturer"] = vehicle.information.brand
-        info["model"] = vehicle.information.model
-        info["serial_number"] = vehicle.information.vin
-    return DeviceInfo(**info)
+    return DeviceInfo(identifiers=indentifiers)
 
 
 class VehicleEntity[_DataUpdateCoordinatorT: DataUpdateCoordinator](
