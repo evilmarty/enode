@@ -21,7 +21,7 @@ jobs:
         id: manifest
         run: jq -r 'to_entries|map("\(.key)=\(.value)")|join("\n")' custom_components/enode/manifest.json >> "$GITHUB_OUTPUT"
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "v${{steps.manifest.outputs.version}}"
           generate_release_notes: true
