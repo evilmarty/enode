@@ -1,9 +1,14 @@
 {
   "domain": "enode",
   "name": "Enode",
-  "codeowners": ["@evilmarty"],
+  "codeowners": [
+    "@evilmarty"
+  ],
   "config_flow": true,
-  "dependencies": ["application_credentials", "http"],
+  "dependencies": [
+    "application_credentials",
+    "http"
+  ],
   "documentation": "https://github.com/evilmarty/enode",
   "homekit": {},
   "integration_type": "service",
@@ -12,6 +17,6 @@
   "quality_scale": "bronze",
   "requirements": [],
   "ssdp": [],
-  "version": "1.3.0",
+  "version": "1.3.2",
   "zeroconf": []
 }
