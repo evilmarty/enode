@@ -87,5 +87,5 @@ To be able to use webhooks your Home Assistant installing must fufill the follow
 
 # TODO
 
-* [ ] Verify cloud support for webhooks
+* [x] Verify cloud support for webhooks
 * [ ] Add support for vehicle smart charging
