@@ -97,4 +97,6 @@ async def get_client(hass: HomeAssistant, entry: ConfigEntry) -> EnodeClient:
     """Get the Enode client."""
     implementation = await async_get_config_entry_implementation(hass, entry)
     sandbox = entry.data.get(CONF_SANDBOX, False)
+    if sandbox and isinstance(implementation, Oauth2Impl):
+        implementation.sandbox_mode()
     return EnodeClient(OAuth2Session(hass, entry, implementation), sandbox=sandbox)
